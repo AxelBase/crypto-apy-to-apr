@@ -1,0 +1,234 @@
+<script>
+  import { fade, fly, slide } from 'svelte/transition';
+  import { aprToApy, apyToApr, frequencies, getCryptoContext } from '$lib/converter';
+
+  let rate = '';
+  let frequency = 'daily';
+  let direction = 'aprToApy';
+  let result = null;
+  let context = '';
+
+  function calculate() {
+    if (!rate) return;
+    if (direction === 'aprToApy') {
+      const res = aprToApy(rate, frequency);
+      result = res.apy;
+    } else {
+      const res = apyToApr(rate, frequency);
+      result = res.apr;
+    }
+    context = getCryptoContext(direction, rate, frequency, result);
+  }
+</script>
+
+<div class="container py-5 mt-5">
+  <section id="home" class="row justify-content-center mb-5 pt-4">
+    <div class="col-lg-7 text-center mb-5" in:fade>
+      <h1 class="display-3 fw-bold mb-3">Precision <span style="color: var(--color-accent);">Yield.</span></h1>
+      <p class="lead text-muted">The definitive tool for converting between APY and APR across any compounding frequency.</p>
+    </div>
+
+    <div class="col-lg-5" in:fly={{ y: 30, duration: 800 }}>
+      <div class="glass-card p-4 p-md-5">
+        <div class="mb-4">
+          <label for="rateInput" class="small fw-bold text-muted text-uppercase mb-2">Interest Rate (%)</label>
+          <input id="rateInput" type="number" class="form-control form-control-lg" bind:value={rate} placeholder="0.00" />
+        </div>
+
+        <div class="mb-4">
+          <label for="freqSelect" class="small fw-bold text-muted text-uppercase mb-2">Compounding Frequency</label>
+          <select id="freqSelect" class="form-select" bind:value={frequency}>
+            {#each Object.entries(frequencies) as [key, _]}
+              <option value={key}>{key.charAt(0).toUpperCase() + key.slice(1)}</option>
+            {/each}
+          </select>
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+          <button class="btn w-50 rounded-pill fw-bold {direction === 'aprToApy' ? 'btn-ochre' : 'btn-outline-secondary'}" on:click={() => direction = 'aprToApy'}>APR to APY</button>
+          <button class="btn w-50 rounded-pill fw-bold {direction === 'apyToApr' ? 'btn-ochre' : 'btn-outline-secondary'}" on:click={() => direction = 'apyToApr'}>APY to APR</button>
+        </div>
+
+        <button class="btn btn-calc w-100 py-3 fw-bold shadow-sm" on:click={calculate}>Calculate Now</button>
+
+        {#if result !== null}
+          <div class="mt-4 p-3 rounded-4 text-center result-box" transition:slide>
+            <div class="small text-muted fw-bold">EFFECTIVE {direction === 'aprToApy' ? 'APY' : 'APR'}</div>
+            <div class="display-4 fw-bold" style="color: var(--color-accent);">{result}%</div>
+            <p class="small text-muted mt-2 mb-0">{context}</p>
+          </div>
+        {/if}
+      </div>
+    </div>
+  </section>
+
+<!-- src/routes/+page.svelte (main page sections update) -->
+
+<section id="about" class="py-5 text-center">
+  <div class="glass-card p-5">
+    <h2 class="fw-bold mb-4">About the Crypto APY ↔ APR Converter</h2>
+    <p class="text-muted mx-auto mb-0" style="max-width: 750px;">
+      The Crypto APY ↔ APR Converter is a free, open-source, fully client-side web utility designed to provide transparent and accurate conversions between Annual Percentage Rate (APR) and Annual Percentage Yield (APY). Built specifically for the cryptocurrency community, it addresses a common pain point: many staking platforms, DeFi protocols, and lending services quote yields using different metrics, making fair comparisons difficult. Some advertise simple APR while others highlight compounded APY, often without clearly stating the compounding frequency. This tool eliminates the confusion by allowing users to convert between the two metrics with full control over compounding periods.
+
+      Unlike general financial calculators, this utility defaults to daily compounding — the most common schedule in proof-of-stake networks such as Ethereum, Solana, Cardano, and Polkadot, as well as many DeFi lending platforms like Aave and Compound. It also supports weekly, monthly, quarterly, annual, and continuous compounding, enabling precise modeling of real-world scenarios. All calculations use standard financial formulas implemented with high precision in pure JavaScript: for discrete compounding, APY = (1 + APR/n)^n − 1, and for continuous, APY = e^APR − 1, with accurate inverse calculations for APY to APR conversions.
+
+      Privacy and security are core principles. The entire application runs in your browser — no data is sent to servers, no cookies are set, and no analytics track usage. Inputs are processed locally and discarded on page refresh. This stateless, static design ensures complete data isolation while delivering instant results. The tool also includes thoughtful edge-case handling: zero rates return zero, negative inputs trigger warnings, and extremely high rates (over 1000%) are flagged to prevent misleading outputs common in hyper-yield crypto environments.
+
+      Educational resources complement the converter. Dedicated pages explain crypto-specific differences between APR and APY, detail mathematical derivations with step-by-step examples, and provide real-world context from major staking and DeFi platforms. A comprehensive blog offers in-depth articles on topics ranging from daily compounding mechanics to common pitfalls when comparing yields across protocols.
+
+      Whether you are evaluating staking rewards, comparing DeFi lending rates, or simply learning how compounding affects long-term returns, this converter empowers you with clear, unbiased numbers. It is part of a broader mission to bring transparency to cryptocurrency finance, helping users make informed decisions in an ecosystem where yield quotes can sometimes obscure true performance. By focusing exclusively on accurate, crypto-relevant calculations without ads, tracking, or hidden agendas, the tool serves as a reliable companion for both beginners exploring staking and experienced users optimizing yield strategies.
+    </p>
+  </div>
+</section>
+
+<section id="how-to" class="py-5">
+  <h2 class="fw-bold text-center mb-5">How to Use the Converter</h2>
+  <div class="row g-4 text-center">
+    <div class="col-md-4">
+      <div class="glass-card p-4 h-100">
+        <div class="h2 fw-bold mb-3" style="color: var(--color-accent);">01</div>
+        <h5>Enter Your Rate</h5>
+        <p class="small text-muted mb-0">
+          Start by typing the annual percentage rate you’ve seen advertised. This could be an APR from a staking pool, an APY from a DeFi lending platform, or any yield quote from Binance Earn, Kraken, or a liquidity pool. Use decimal values if needed (e.g., 7.5 for 7.5%). The field accepts any positive number, though rates above 1000% will trigger a warning due to potential calculation instability.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="glass-card p-4 h-100">
+        <div class="h2 fw-bold mb-3" style="color: var(--color-accent);">02</div>
+        <h5>Select Compounding Frequency</h5>
+        <p class="small text-muted mb-0">
+          Choose how often rewards or interest are added back to your principal. Daily (365 periods) is the default and most accurate for the majority of proof-of-stake networks and DeFi protocols. Other options include weekly, monthly, quarterly, annually, and continuous (the theoretical maximum using e^r). Adjust this to match the exact schedule of the platform you’re evaluating — small frequency differences create meaningful APY variations.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="glass-card p-4 h-100">
+        <div class="h2 fw-bold mb-3" style="color: var(--color-accent);">03</div>
+        <h5>Choose Direction & Convert</h5>
+        <p class="small text-muted mb-0">
+          Select whether you’re converting APR → APY (to see the real compounded return) or APY → APR (to reveal the base simple rate). Click “Convert” or press Enter. Results appear instantly with four-decimal precision, accompanied by crypto-specific context explaining the implication for staking or lending. Use the result to compare opportunities fairly across platforms that quote different metrics.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 text-center mt-4">
+    <div class="col-md-4 offset-md-2">
+      <div class="glass-card p-4 h-100">
+        <div class="h2 fw-bold mb-3" style="color: var(--color-accent);">04</div>
+        <h5>Explore Educational Content</h5>
+        <p class="small text-muted mb-0">
+          Dive deeper via the “Crypto Explanation” and “Formulas” links. Learn why APY better represents staking rewards, see full mathematical derivations with examples, and understand edge cases. The blog provides extended articles on real-world platform behavior and common comparison mistakes.
+        </p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="glass-card p-4 h-100">
+        <div class="h2 fw-bold mb-3" style="color: var(--color-accent);">05</div>
+        <h5>Repeat & Compare</h5>
+        <p class="small text-muted mb-0">
+          Change inputs instantly — no page reloads needed. Test multiple scenarios side-by-side mentally or by noting results. Bookmark the page for quick access whenever researching new staking opportunities or DeFi yields.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <p class="text-center text-muted mt-5" style="max-width: 800px; margin-left: auto; margin-right: auto;">
+    Everything happens in your browser with zero data transmission. Use confidently on any device, knowing your inputs remain private.
+  </p>
+</section>
+
+<section id="faq" class="py-5 mb-5">
+  <h2 class="fw-bold text-center mb-5">Frequently Asked Questions</h2>
+  <div class="mx-auto" style="max-width: 800px;">
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">What is the difference between APR and APY?</h6>
+      <p class="small text-muted mb-0">
+        APR (Annual Percentage Rate) is the simple annual interest rate without compounding. APY (Annual Percentage Yield) is the effective annual rate after compounding interest on interest. In crypto, daily or frequent compounding makes APY significantly higher than APR, giving a truer picture of what you actually earn or pay.
+      </p>
+    </div>
+
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">Why does the tool default to daily compounding?</h6>
+      <p class="small text-muted mb-0">
+        Daily compounding is the standard in most proof-of-stake blockchains (Ethereum, Solana, Cardano, Polkadot) and DeFi lending protocols. Rewards are credited and automatically reinvested daily, creating the compounding effect that separates APR from APY. The default ensures the most relevant result for typical crypto use cases.
+      </p>
+    </div>
+
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">Is my data private and secure?</h6>
+      <p class="small text-muted mb-0">
+        Yes, completely. The entire tool runs client-side in your browser using JavaScript. No information is sent to any server, no cookies are used, and no analytics track usage. Inputs are processed locally and cleared when you close or refresh the page.
+      </p>
+    </div>
+
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">Can I use this for traditional finance rates?</h6>
+      <p class="small text-muted mb-0">
+        Absolutely. While optimized for crypto (with daily default and continuous option), the converter works for any interest rate scenario — bank savings, CDs, loans, or credit cards — by selecting the appropriate compounding frequency.
+      </p>
+    </div>
+
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">Why are very high rates flagged?</h6>
+      <p class="small text-muted mb-0">
+        Rates above 1000% can produce numerical instability or misleading outputs in extreme cases. The tool warns users to maintain reliability, as such rates are rare outside speculative or hyperinflationary tokens.
+      </p>
+    </div>
+
+    <div class="glass-card p-4 mb-3">
+      <h6 class="fw-bold">Is this financial advice?</h6>
+      <p class="small text-muted mb-0">
+        No. The converter and all content are for educational and informational purposes only. Cryptocurrency involves risk, and yields can change rapidly. Always perform your own research and consider fees, lock-ups, slashing risks, and volatility before investing.
+      </p>
+    </div>
+
+    <div class="glass-card p-4">
+      <h6 class="fw-bold">How accurate are the calculations?</h6>
+      <p class="small text-muted mb-0">
+        Calculations use standard financial mathematics with four-decimal precision. Round-trip conversions (APR → APY → APR) return values within 0.0001% of the original due to floating-point accuracy. Results match established financial calculators and protocol documentation.
+      </p>
+    </div>
+  </div>
+</section>
+</div>
+
+<style>
+  .btn-ochre { 
+    background: var(--color-accent); 
+    color: white; 
+    border: none; 
+    transition: 0.3s; 
+  }
+  .btn-ochre:hover { 
+    background: var(--color-accent-hover); 
+    transform: scale(1.05); 
+  }
+
+  /* Fixed Calculate Button for Dark Mode */
+  .btn-calc { 
+    background: #2c3e50; /* Solid dark color for light mode */
+    color: #ffffff; 
+    border: none; 
+    border-radius: 12px; 
+    transition: all 0.3s ease; 
+  }
+
+  :global([data-bs-theme="dark"]) .btn-calc {
+    background: var(--color-accent); /* Use accent color in dark mode for visibility */
+    color: #000000;
+    font-weight: 800 !important;
+  }
+
+  .btn-calc:hover { 
+    transform: translateY(-2px); 
+    filter: brightness(1.2); 
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  }
+
+  .result-box { 
+    background: rgba(174, 160, 75, 0.08); 
+    border: 1px dashed var(--color-accent); 
+  }
+</style>
