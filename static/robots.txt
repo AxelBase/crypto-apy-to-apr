@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://axelbase.github.io/crypto-apy-to-apr/sitemap.xml
+Sitemap: https://crypto-apy-to-apr.vercel.app/sitemap.xml
